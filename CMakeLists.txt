@@ -49,6 +49,10 @@ message(STATUS "Full path of translations install path: ${FULL_LIBDIR_PATH}")
 find_package(OpenGL REQUIRED)
 find_package(Qt6 6.2 REQUIRED COMPONENTS Widgets Network Gui LinguistTools)
 
+# NOTE: must be called before the target is created, otherwise the I18N settings
+# are not applied to the executable and no .qm files are generated.
+qt_standard_project_setup(I18N_TRANSLATED_LANGUAGES en_US sv_SE de_DE fr_FR zh_CN)
+
 if (UNIX AND NOT APPLE AND KNOTIFICATIONS_ENABLED)
     find_package(KF6Notifications REQUIRED)
 endif()
@@ -152,8 +156,6 @@ else ()
 
 endif ()
 
-qt_standard_project_setup(I18N_TRANSLATED_LANGUAGES en_US sv_SE de_DE fr_FR)
-
 target_link_libraries(
     tail-tray PRIVATE
     Qt6::Widgets
@@ -172,13 +174,24 @@ install(TARGETS tail-tray
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-if (UNIVERSAL_CROSSBUILD)
-    install(FILES "${CMAKE_BINARY_DIR}/tail_tray_en_US.qm"
-            "${CMAKE_BINARY_DIR}/tail_tray_sv_SE.qm"
-            "${CMAKE_BINARY_DIR}/tail_tray_fr_FR.qm"
-            "${CMAKE_BINARY_DIR}/tail_tray_de_DE.qm"
-            DESTINATION "${FULL_LIBDIR_PATH}")
-endif ()
+# Compile the .ts catalogs into .qm files and make them part of the build.
+# QM_FILES_OUTPUT_VARIABLE gives us the exact output paths, which we install
+# into FULL_LIBDIR_PATH below - the directory main.cpp loads translations from.
+qt_add_translations(tail-tray
+    TS_FILES
+        translations/tail_tray_en_US.ts
+        translations/tail_tray_sv_SE.ts
+        translations/tail_tray_de_DE.ts
+        translations/tail_tray_fr_FR.ts
+        translations/tail_tray_zh_CN.ts
+    NO_GENERATE_PLURALS_TS_FILE
+    QM_FILES_OUTPUT_VARIABLE TAIL_TRAY_QM_FILES
+)
+
+# Install the compiled translations (.qm) next to the app's private data dir.
+# This must match TRANSLATIONS_DIR above, which is what main.cpp uses at runtime.
+install(FILES ${TAIL_TRAY_QM_FILES}
+        DESTINATION "${FULL_LIBDIR_PATH}")
 
 if (UNIX AND NOT APPLE)
     if (KNOTIFICATIONS_ENABLED)

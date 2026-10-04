@@ -1,7 +1,10 @@
 [Desktop Entry]
 Name=Tail Tray
+Name[zh_CN]=Tail Tray 托盘
 GenericName=Tail Tray
+GenericName[zh_CN]=Tail Tray 托盘
 Comment=Tailscale Tray Application
+Comment[zh_CN]=Tailscale 托盘应用
 Exec=tail-tray
 Icon=tail-tray
 X-LightIcon=tail-tray
